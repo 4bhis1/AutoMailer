@@ -2,14 +2,35 @@ const figlet = require("figlet");
 
 const startPrint = async (message) => {
   return new Promise((res) => {
-    figlet(message, async function (err, data) {
-      const chalk = await import("chalk");
-      if (err) {
-        return;
+    figlet.text(
+      message,
+      {
+        font: "Big", // You can choose from different fonts (Standard, Slant, Big, etc.)
+      },
+      async (err, data) => {
+        if (err) {
+          console.error("Something went wrong...");
+          console.dir(err);
+          return;
+        }
+
+        const chalk = await import("chalk");
+
+        const terminalWidth = process.stdout.columns;
+
+        // Split the figlet text into lines to center them individually
+        const lines = data.split("\n");
+        lines.forEach((line) => {
+          const padding = Math.max(
+            0,
+            Math.floor((terminalWidth - line.length) / 2)
+          );
+          console.log(chalk.default.blue(" ".repeat(padding) + line));
+        });
+
+        res();
       }
-      console.log(chalk.default.blue(data));
-      res();
-    });
+    );
   });
 };
 
