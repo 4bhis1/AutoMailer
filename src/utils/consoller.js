@@ -9,8 +9,6 @@ const startPrint = async (message) => {
       },
       async (err, data) => {
         if (err) {
-          console.error("Something went wrong...");
-          console.dir(err);
           return;
         }
 
@@ -18,7 +16,6 @@ const startPrint = async (message) => {
 
         const terminalWidth = process.stdout.columns;
 
-        // Split the figlet text into lines to center them individually
         const lines = data.split("\n");
         lines.forEach((line) => {
           const padding = Math.max(

@@ -1,4 +1,6 @@
 node_modules/
 src/assets/
 
+getYourEmail/companies
+company_emails.json
 .env

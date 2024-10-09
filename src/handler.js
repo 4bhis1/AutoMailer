@@ -4,7 +4,7 @@ const { scheduleDailyTasks } = require("./utils/sheduler");
 sendEmail("4bhis1@gmail.com", "Hello test", "this is my contenr");
 
 const handler = async () => {
-  const scheduleEmailAt = ["12:00:00", "13:00:00"];
+  const scheduleEmailAt = ["10:02:00"];
 
   scheduleDailyTasks((time) => {
     log(`>>> time ${time}`);
