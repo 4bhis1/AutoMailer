@@ -83,7 +83,7 @@ const sendEmailToCompanies = async (companyJsonInstance) => {
     } catch (err) {
       console.error(`Error in scheduled email sending: ${err}`);
     }
-  }, Math.random() * 100000);  // Random interval as defined
+  }, Math.random() * 1000000);  // Random interval as defined
 };
 
 module.exports = sendEmailToCompanies;
