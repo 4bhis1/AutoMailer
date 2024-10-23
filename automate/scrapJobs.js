@@ -1,5 +1,6 @@
 const puppeteer = require("puppeteer");
 const { fakePromise } = require("../utils/utils");
+const { log, error } = require("../utils/consoller");
 
 const scrollToBottom = async (page) => {
   await page.evaluate(async () => {
@@ -9,7 +10,6 @@ const scrollToBottom = async (page) => {
     if (!container) return; // Exit if container doesn't exist
     let previousHeight = container.scrollHeight;
 
-    console.log("🚀 ~ Current container height:", previousHeight);
 
     while (true) {
       container.scrollTop = container.scrollHeight; // Scroll to the bottom
@@ -21,7 +21,7 @@ const scrollToBottom = async (page) => {
 };
 
 // Function to login and scrape jobs
-async function startScraping(companyInstance) {
+async function startScraping(companyInstance, scrapCompanyEvent) {
   const browser = await puppeteer.launch({
     headless: false, // Keep headless false to see the browser; set to true for background
     args: ["--no-sandbox"],
@@ -37,14 +37,19 @@ async function startScraping(companyInstance) {
   // Enter email and password, then submit login form
   await page.type("#username", process.env.USERNAME);
   await page.type("#password", process.env.PASSWORD);
+  await new Promise((Res) => {
+    setTimeout(() => {
+      Res()
+    }, 2000)
+  })
   await page.click('button[type="submit"]');
 
   // Step 2: Wait for a specific element to confirm successful login
   try {
-    await page.waitForSelector(".global-nav__me-photo", { timeout: 10000 }); // Wait for profile image to appear
-    console.log("Logged in successfully!");
-  } catch (error) {
-    console.log("Login failed or took too long:", error);
+    await page.waitForSelector(".global-nav__me-photo", { timeout: 15000 }); // Wait for profile image to appear
+    log("Logged in linekdin successfully!");
+  } catch (err) {
+    error("Login failed or took too long:", err);
     await browser.close();
     return;
   }
@@ -55,13 +60,10 @@ async function startScraping(companyInstance) {
 
     for (let index = 0; index <= 10; index++) {
       try {
-        const jobSearchUrl = `https://www.linkedin.com/jobs/search/?currentJobId=4044942019&distance=25&f_CR=102713980&f_E=3&f_F=eng%2Cit&f_I=4%2C96%2C6&f_JT=F&f_T=9%2C25194%2C100&geoId=92000000&keywords=javascript&origin=JOB_SEARCH_PAGE_KEYWORD_AUTOCOMPLETE&refresh=true&start=${
-          index * 7
-        }`; // Note: Adjusted for more jobs per page
+        const jobSearchUrl = `https://www.linkedin.com/jobs/search/?currentJobId=4044942019&distance=25&f_CR=102713980&f_E=3&f_F=eng%2Cit&f_I=4%2C96%2C6&f_JT=F&f_T=9%2C25194%2C100&geoId=92000000&keywords=javascript&origin=JOB_SEARCH_PAGE_KEYWORD_AUTOCOMPLETE&refresh=true&start=${index * 7
+          }`; // Note: Adjusted for more jobs per page
 
-        console.log("Navigating to job search URL...", jobSearchUrl);
         await page.goto(jobSearchUrl, { waitUntil: "load", timeout: 60000 });
-        console.log("Successfully navigated to job search URL");
 
         // Wait for the job listings to load
         await page.waitForSelector(".jobs-search-results__list-item");
@@ -95,20 +97,10 @@ async function startScraping(companyInstance) {
               : "";
             const referralId = jobLink
               ? new URL(`https://www.linkedin.com${jobLink}`).searchParams.get(
-                  "currentJobId"
-                )
+                "currentJobId"
+              )
               : null; // Extract referral ID from job link
 
-            console.log(">>>", {
-              jobTitle,
-              companyName,
-              location,
-              jobLink: formattedJobLink,
-              jobId,
-              referralId,
-              jobDescription: "", // Placeholder for job description
-            });
-            // Push the job data to the array
             if (jobTitle && companyName && location && jobLink) {
               jobData[`${companyName}-${jobTitle}`] = {
                 jobTitle,
@@ -121,10 +113,6 @@ async function startScraping(companyInstance) {
               };
             }
 
-            console.log(
-              "🚀 ~ file: scrapJobs2.js:124 ~ jobElements.forEach ~ jobLink:",
-              jobLink
-            );
           });
 
           return jobData;
@@ -132,15 +120,8 @@ async function startScraping(companyInstance) {
 
         jobs = { ...jobs, ...newJobs };
 
-        console.log(
-          `Fetched ${Object.values(newJobs).length} jobs from page ${
-            index + 1
-          }.`
-        );
-        console.log("Current Jobs:", newJobs);
 
         for (const [key, job] of Object.entries(newJobs)) {
-          console.log("🚀 ~ file: scrapJobs2.js:155 ~ scrapeJobs ~ key:", key);
 
           await page.goto(job.jobLink, { waitUntil: "load", timeout: 60000 });
 
@@ -156,8 +137,6 @@ async function startScraping(companyInstance) {
             return null;
           });
 
-          console.log("Job Description:", jobDescription);
-
           await fakePromise();
           jobs[key].jobDescription = jobDescription;
         }
@@ -167,20 +146,24 @@ async function startScraping(companyInstance) {
           return data;
         });
 
+        console.log(">>> goint to trigger the emailScrap")
+        scrapCompanyEvent.triggerEvent('triggerEmailScrap', { message: 'Trigger email scrapping process.' });
+
         await fakePromise();
       } catch (err) {
-        console.log(">> Error:", err);
+        -
+          console.log(">>>> err", err)
+        error(">> Error while scraping jobs:", err);
       }
     }
 
-    console.log("Total jobs scraped:", Object.keys(jobs).length);
-    console.log("All Scraped Jobs:", jobs);
+    log(`Total jobs scraped: ${Object.keys(jobs).length}`);
   };
 
   await scrapeJobs();
 
   setInterval(async () => {
-    console.log("Navigating to the LinkedIn jobs page again...");
+    log("Navigating to the LinkedIn jobs page again...");
     await scrapeJobs();
   }, 2 * 60 * 60 * 1000);
 }

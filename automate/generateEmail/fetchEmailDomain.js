@@ -53,7 +53,7 @@ function extractDomain(dataArray, companyName) {
   return potentialDomains.length > 0 ? potentialDomains[0] : undefined;
 }
 
-const fetchCompanyDomain = async (company) => {
+const fetchCompanyDomain = async (company, sendEmailEvent) => {
   const browser = await puppeteer.launch({ headless: false });
   const page = await browser.newPage();
   const domains = await scrapeEmailFormats(page, company);
@@ -62,6 +62,7 @@ const fetchCompanyDomain = async (company) => {
   if (companyDomain) {
     await fakePromise();
     await fetchCompanyPeople(page, company, companyDomain);
+    sendEmailEvent.triggerEvent("triggerEmailSend", { message: "Start sending emails." })
   }
 
   await browser.close();

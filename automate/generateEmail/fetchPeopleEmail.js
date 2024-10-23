@@ -1,3 +1,4 @@
+const { error } = require("../../utils/consoller");
 const JsonDB = require("../../utils/jsonB");
 const { fakePromise, getEmail } = require("../../utils/utils");
 
@@ -68,7 +69,7 @@ const fetchCompanyPeople = async (page, company, companyDomain) => {
         res();
       });
     } catch (err) {
-      console.log(">> err", err);
+      error(">> err", err);
     }
 
     await fakePromise();
