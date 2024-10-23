@@ -1,49 +1,89 @@
+const { refererContent } = require("../config/emailTemplates");
+const { log } = require("../utils/consoller");
 const JsonDB = require("../utils/jsonB");
 const { sendEmail } = require("../utils/mailer");
 
 const sendEmailToCompanies = async (companyJsonInstance) => {
+  log("Preparing to send emails....");
 
-  console.log(">> this s ccej ")
   const func = async () => {
-    let company = await new Promise((res, rej) => {
-      companyJsonInstance.read((data) => {
-        const companyList =
-          Object.keys(data)[
-          Math.floor(Math.random() * Object.values(data).length)
-          ];
-        res(data[companyList]);
+    try {
+      let company = await new Promise((res, rej) => {
+        companyJsonInstance.read((data) => {
+          try {
+            const companyList =
+              Object.keys(data)[
+              Math.floor(Math.random() * Object.values(data).length)
+              ];
+            res(data[companyList]);
+          } catch (err) {
+            rej(`Error reading company list: ${err}`);
+          }
+        });
       });
-    });
-    console.log(">> copamu", company)
-    const emails = new JsonDB(company.companyName, {}, "companies");
 
-    const email = await new Promise((res, rej) => {
-      emails.read((data) => {
-        console.log(">> data", data)
-        const email = Object.keys(data)[
-          Math.floor(Math.random() * Object.values(data).length)
-        ];
-        console
-        res(data[email]);
+      const emails = new JsonDB(company.companyName, {}, "companies");
+
+      const email = await new Promise((res, rej) => {
+        emails.read((data) => {
+          let count = 0;
+
+          const getEmail = () => {
+            try {
+              const email = Object.keys(data)[
+                Math.floor(Math.random() * Object.values(data).length)
+              ];
+              res(data[email]);
+            } catch (err) {
+              if (count === 0) {
+                count++;
+                getEmail();  // Retry once
+              } else {
+                rej(`Error retrieving email: ${err}`);
+              }
+            }
+          };
+
+          getEmail();
+        });
       });
-    })
 
-    console.log(">> email", email)
+      log(`${email?.name} && ${company.jobLink} && ${company.companyName} && ${email?.email}`);
 
-    // const getRandomCompany = await sendEmail();
+      if (email?.name && company.jobLink && company.companyName && email?.email) {
+        try {
+          const { subject, content } = refererContent(email.name, company.jobLink, company.companyName);
+          await sendEmail(email.email, subject, content, '/assets/Resume.pdf');
 
+          const completedCompany = new JsonDB(company.companyName, {}, "doneCompanies");
+          completedCompany.write((data) => {
+            return { ...data, [email.email]: true };
+          });
 
+          emails.write((data) => {
+            delete data[email.email];
+            return data;
+          });
 
-  }
+        } catch (err) {
+          console.error(`Error sending email: ${err}`);
+        }
+      }
+    } catch (err) {
+      console.error(`Error: ${err}`);
+    }
+  };
 
-  await func()
+  await func();
 
-  // setTimeout(() => {
-  //   func()
-  // },
-  //   Math.random() * 100000
-  // );
-
+  // Schedule next call with a delay to avoid overlap
+  setInterval(async () => {
+    try {
+      await func();
+    } catch (err) {
+      console.error(`Error in scheduled email sending: ${err}`);
+    }
+  }, Math.random() * 100000);  // Random interval as defined
 };
 
 module.exports = sendEmailToCompanies;

@@ -1,5 +1,6 @@
 const nodemailer = require("nodemailer");
 const dotenv = require("dotenv");
+const path = require("path");
 const { log, error } = require("./consoller");
 dotenv.config("../../.env");
 
@@ -12,6 +13,9 @@ const transporter = nodemailer.createTransport({
 });
 
 const sendEmail = async (recipient, subject, content, resumePath) => {
+
+  resumePath = path.join(__dirname,
+    "../", resumePath);
   const mailOptions = {
     from: process.env.EMAIL,
     to: recipient,
@@ -19,7 +23,7 @@ const sendEmail = async (recipient, subject, content, resumePath) => {
     text: content,
     attachments: [
       {
-        filename: "resume.pdf",
+        filename: "Resume.pdf",
         path: resumePath,
       },
     ],

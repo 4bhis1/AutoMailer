@@ -15,12 +15,11 @@ const EmitOnceEmitter = require("./utils/enventEmitter.js");
 
   const companyJson = new JsonDB("Company", {});
 
-  sendEmailToCompanies(companyJson);
 
 
-  // sendEmailEvent.listenToEventOnce("triggerEmailSend", async () => {
-  //   sendEmailToCompanies(companyJson);
-  // })
+  sendEmailEvent.listenToEventOnce("triggerEmailSend", async () => {
+    sendEmailToCompanies(companyJson);
+  })
 
 
   scrapCompanyEvent.listenToEventOnce("triggerEmailScrap", (data) => {
@@ -42,11 +41,13 @@ const EmitOnceEmitter = require("./utils/enventEmitter.js");
   })
 
 
-  // startScraping(companyJson, scrapCompanyEvent);
+  startScraping(companyJson, scrapCompanyEvent);
 
   companyJson.read(async (companies) => {
-    if (Object.keys(companies).length)
+    if (Object.keys(companies).length) {
       scrapCompanyEvent.triggerEvent('triggerEmailScrap', { message: 'Trigger email scrapping process.' });
+      sendEmailEvent.triggerEvent("triggerEmailSend", { message: "Start sending emails." })
+    }
   })
 
 
