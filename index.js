@@ -18,12 +18,9 @@ const EmitOnceEmitter = require("./utils/enventEmitter.js");
 
   const companyJson = new JsonDB("Company", {});
 
-
-
   sendEmailEvent.listenToEventOnce("triggerEmailSend", async () => {
     sendEmailToCompanies(companyJson);
-  })
-
+  });
 
   scrapCompanyEvent.listenToEvent("triggerEmailScrap", (data) => {
     companyJson.read(async (companies) => {
@@ -31,9 +28,7 @@ const EmitOnceEmitter = require("./utils/enventEmitter.js");
       companies = Object.values(companies);
       for (let company of companies) {
         try {
-          log(
-            `Creating emails for ${company.companyName}`
-          );
+          log(`Creating emails for ${company.companyName}`);
           await fetchCompanyDomain(company.companyName, sendEmailEvent);
           await fakePromise();
         } catch (error) {
@@ -41,17 +36,18 @@ const EmitOnceEmitter = require("./utils/enventEmitter.js");
         }
       }
     });
-  })
-
-
-  startScraping(companyJson, scrapCompanyEvent);
+  });
 
   companyJson.read(async (companies) => {
     if (Object.keys(companies).length) {
-      scrapCompanyEvent.triggerEvent('triggerEmailScrap', { message: 'Trigger email scrapping process.' });
-      sendEmailEvent.triggerEvent("triggerEmailSend", { message: "Start sending emails." })
+      scrapCompanyEvent.triggerEvent("triggerEmailScrap", {
+        message: "Trigger email scrapping process.",
+      });
+      sendEmailEvent.triggerEvent("triggerEmailSend", {
+        message: "Start sending emails.",
+      });
     }
-  })
+  });
 
-
+  startScraping(companyJson, scrapCompanyEvent);
 })();

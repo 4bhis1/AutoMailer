@@ -4,11 +4,14 @@ const path = require("path");
 class JsonDB {
   static #data = null; // Static and private
 
-  constructor(name, initialValue = [], db) {
-    if (db) {
-      this.filePath = path.join(`assets/${db}/`, `${name}.json`);
+  constructor(dbName, initialValue = [], collection) {
+    if (collection) {
+      if (!fs.existsSync(`assets/${collection}`)) {
+        fs.mkdirSync(`assets/${collection}`, { recursive: true });
+      }
+      this.filePath = path.join(`assets/${collection}/`, `${dbName}.json`);
     } else {
-      this.filePath = path.join(`assets/`, `${name}.json`);
+      this.filePath = path.join(`assets/`, `${dbName}.json`);
     }
     this.queue = [];
     this.isProcessing = false;
