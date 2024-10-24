@@ -49,13 +49,23 @@ const sendEmailToCompanies = async (companyJsonInstance) => {
       });
 
       log(`${email?.name} && ${company.jobLink} && ${company.companyName} && ${email?.email}`);
+      const completedCompany = new JsonDB(company.companyName, {}, "doneCompanies");
+
+      completedCompany.read((data) => {
+        emails.write((data) => {
+          delete data[email.email];
+          return data;
+        });
+        if (data[email.email]) {
+          func();
+        }
+      });
 
       if (email?.name && company.jobLink && company.companyName && email?.email) {
         try {
-          const { subject, content } = refererContent(email.name, company.jobLink, company.companyName);
+          const { subject, content } = refererContent(email.name.split(" ")[0], company.jobLink, company.companyName);
           await sendEmail(email.email, subject, content, '/assets/Resume.pdf');
 
-          const completedCompany = new JsonDB(company.companyName, {}, "doneCompanies");
           completedCompany.write((data) => {
             return { ...data, [email.email]: true };
           });
@@ -68,6 +78,8 @@ const sendEmailToCompanies = async (companyJsonInstance) => {
         } catch (err) {
           console.error(`Error sending email: ${err}`);
         }
+      } else {
+        func()
       }
     } catch (err) {
       console.error(`Error: ${err}`);

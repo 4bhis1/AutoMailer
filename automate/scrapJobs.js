@@ -1,5 +1,5 @@
 const puppeteer = require("puppeteer");
-const { fakePromise } = require("../utils/utils");
+const { fakePromise, filterJobDescription } = require("../utils/utils");
 const { log, error } = require("../utils/consoller");
 
 const scrollToBottom = async (page) => {
@@ -138,7 +138,17 @@ async function startScraping(companyInstance, scrapCompanyEvent) {
           });
 
           await fakePromise();
+
+          log(`${jobs[key]} ${jobDescription}`)
+
+          const skillMatch = filterJobDescription(job.jobDescription);
+
           jobs[key].jobDescription = jobDescription;
+
+          if (skillMatch > 3) {
+            jobs[key].fevourable = true
+          }
+
         }
 
         companyInstance.write((data) => {

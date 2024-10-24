@@ -3,14 +3,17 @@ const {
 } = require("./automate/generateEmail/fetchEmailDomain");
 const { startScraping } = require("./automate/scrapJobs");
 const JsonDB = require("./utils/jsonB");
-const { fakePromise } = require("./utils/utils");
+const { fakePromise, checkInfo } = require("./utils/utils");
 const sendEmailToCompanies = require("./automate/sendEmail.js");
 const { startPrint, log } = require("./utils/consoller.js");
 const EmitOnceEmitter = require("./utils/enventEmitter.js");
 
 (async () => {
   await startPrint("Automate Job");
-  const scrapCompanyEvent = new EmitOnceEmitter();
+
+  checkInfo();
+
+  const scrapCompanyEvent = new EmitOnceEmitter(true);
   const sendEmailEvent = new EmitOnceEmitter();
 
   const companyJson = new JsonDB("Company", {});
@@ -22,7 +25,7 @@ const EmitOnceEmitter = require("./utils/enventEmitter.js");
   })
 
 
-  scrapCompanyEvent.listenToEventOnce("triggerEmailScrap", (data) => {
+  scrapCompanyEvent.listenToEvent("triggerEmailScrap", (data) => {
     companyJson.read(async (companies) => {
       log("Fetching emails for companies...");
       companies = Object.values(companies);
