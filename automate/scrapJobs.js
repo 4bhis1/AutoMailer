@@ -45,7 +45,7 @@ async function startScraping(companyInstance, scrapCompanyEvent) {
 
   // Step 2: Wait for a specific element to confirm successful login
   try {
-    await page.waitForSelector(".global-nav__me-photo", { timeout: 15000 }); // Wait for profile image to appear
+    await page.waitForSelector(".global-nav__me-photo", { timeout: 45000 }); // Wait for profile image to appear
     log("Logged in linekdin successfully!");
   } catch (err) {
     error("Login failed or took too long:", err);
@@ -138,7 +138,9 @@ async function startScraping(companyInstance, scrapCompanyEvent) {
 
           log(`${jobs[key]} ${jobDescription}`);
 
-          const skillMatch = filterJobDescription(job.jobDescription);
+          const skillMatch = filterJobDescription(jobDescription);
+
+          console.log(">>> skillMatch", skillMatch);
 
           jobs[key].jobDescription = jobDescription;
 
