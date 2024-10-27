@@ -16,6 +16,7 @@ class JsonDB {
     this.queue = [];
     this.isProcessing = false;
     this.data;
+    this.dbName = dbName
 
     if (!fs.existsSync(this.filePath)) {
       fs.writeFileSync(this.filePath, JSON.stringify(initialValue, null, 2));
@@ -50,7 +51,14 @@ class JsonDB {
         if (err) {
           reject(err);
         } else {
-          resolve(JSON.parse(data));
+          try{
+            const newData = JSON.parse(data);
+            resolve(newData);
+          }catch(err){
+            console.log(">>> error while reading ", this.dbName)
+            console.log(">>> error ", err)
+            reject(err);
+          }
         }
       });
     });
